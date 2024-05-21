@@ -81,17 +81,18 @@ def perprocess_2D(json_path, input_folder, output_folder, is_mask: bool):
 
 
 class MyDataset(torch.utils.data.Dataset):
-    def __init__(self, image_folder, mask_folder, target_class, transform=None):
+    def __init__(self, image_folder, mask_folder, target_class=None, transform=None):
 
         self.image_folder = image_folder
         self.mask_folder = mask_folder
         self.target_class = target_class
 
-        if transform:
+        if transform is not None:
             self.transform = transform
         else:
-            self.transform = transform.ToTensor()
-
+            self.transform = transforms.Compose([
+                transforms.ToTensor(),
+            ])
         self.image_files = sorted(
             [f for f in os.listdir(image_folder) if f.endswith('.png')])
         self.mask_files = sorted(
@@ -106,11 +107,11 @@ class MyDataset(torch.utils.data.Dataset):
         image = Image.open(image_path).convert('L')
         image = np.array(image, dtype=np.float32) / 255.0
 
-        # mask to tensor
-        mask = Image.open(mask_path).convert('L')
-        mask = torch.from_numpy(np.array(mask, dtype=np.int64))
-
         image = self.transform(image)
+
+        # mask to tensor
+        mask = Image.open(mask_path)
+        mask = torch.from_numpy(np.array(mask, dtype=np.int64))
 
         return image, mask
 
