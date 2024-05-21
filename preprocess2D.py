@@ -81,21 +81,24 @@ def perprocess_2D(json_path, input_folder, output_folder, is_mask: bool):
 
 
 class MyDataset(torch.utils.data.Dataset):
-    def __init__(self, image_folder, mask_folder, transform=None):
+    def __init__(self, image_folder, mask_folder, target_class, transform=None):
+
         self.image_folder = image_folder
         self.mask_folder = mask_folder
-        self.transform = transform
+        self.target_class = target_class
 
-        self.default_transform = transforms.ToTensor()
+        if transform:
+            self.transform = transform
+        else:
+            self.transform = transform.ToTensor()
 
-        # 讀取圖像和mask的路徑
         self.image_files = sorted(
             [f for f in os.listdir(image_folder) if f.endswith('.png')])
         self.mask_files = sorted(
             [f for f in os.listdir(mask_folder) if f.endswith('.png')])
 
     def __getitem__(self, index):
-        # 讀取圖像和mask
+
         image_path = os.path.join(self.image_folder, self.image_files[index])
         mask_path = os.path.join(self.mask_folder, self.mask_files[index])
 
@@ -107,11 +110,7 @@ class MyDataset(torch.utils.data.Dataset):
         mask = Image.open(mask_path).convert('L')
         mask = torch.from_numpy(np.array(mask, dtype=np.int64))
 
-        # 應用transform
-        if self.transform is not None:
-            image = self.transform(image)
-        else:
-            image = self.default_transform(image)
+        image = self.transform(image)
 
         return image, mask
 
