@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 
-def evaluate_model_all_cls(model, test_loader, criterion, device):
+def evaluate_model(model, test_loader, device):
     model.eval()
     num_correct = 0
     num_pixels = 0
@@ -16,9 +16,7 @@ def evaluate_model_all_cls(model, test_loader, criterion, device):
             images,masks = images.to(device),masks.to(device)
             
             outputs = model(images)
-            
-            loss = criterion(outputs, masks)
-                    
+                                
             # Compute accuracy
             preds = torch.argmax(outputs, dim=1)
             mask_non_zero = masks > 0  # Create a mask for non-zero regions
@@ -26,7 +24,7 @@ def evaluate_model_all_cls(model, test_loader, criterion, device):
             num_pixels += mask_non_zero.sum().item()
             
             # Compute Dice and IoU for each class
-            for cls in range(1, 6):  # Classes 1 to 5
+            for cls in range(1, 2):  # Classes 1 to n
                 pred_cls = (preds == cls)
                 true_cls = (masks == cls)
                 intersection = (pred_cls & true_cls).float().sum()
@@ -46,7 +44,7 @@ def train_model(model, train_loader, test_loader, criterion, optimizer, num_epoc
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
-
+        
     for epoch in range(num_epochs):
         model.train()  # Set the model to training mode
         running_loss = 0.0
@@ -74,7 +72,7 @@ def train_model(model, train_loader, test_loader, criterion, optimizer, num_epoc
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}")
         
         # evaluate model
-        test_acc,test_dice = evaluate_model_all_cls(model,test_loader, criterion, device)
+        test_acc,test_dice = evaluate_model(model,test_loader, device)
         print(f"Epoch [{epoch+1}/{num_epochs}], Test_Acc:{test_acc:.4f}, Avg_Dice:{test_dice:.4f}")
 
     return model
